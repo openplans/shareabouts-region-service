@@ -67,6 +67,11 @@ def get_place_region(place_geojson, regions_geojson):
 
 def update_place(place_geojson, properties):
     url = place_geojson['properties']['url'] + '?include_private'
+
+    # Ensure https
+    if url.startswith('http://'):
+        url = url.replace('http://', 'https://')
+
     place_geojson['properties'].update(properties)
 
     resp = requests.put(url, data=json.dumps(place_geojson),
