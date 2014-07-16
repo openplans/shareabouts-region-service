@@ -5,8 +5,21 @@ from flask import Flask, Response, jsonify, request, safe_join
 from shapely.geometry import shape
 
 
+def init_settings():
+    try:
+        app.config.from_pyfile('local_settings.py')
+    except:
+        print 'No settings file found.'
+
+    # Environment overrides
+    access_token = os.environ.get('ACCESS_TOKEN')
+    if (access_token):
+        app.config['ACCESS_TOKEN'] = access_token
+
+
+# Init
 app = Flask(__name__)
-app.debug = True
+init_settings()
 
 # Get the list of directories from the data directory
 locations_list = os.walk('data').next()[1]
@@ -48,12 +61,12 @@ def get_place_region(place_geojson, regions_geojson):
 
 
 def update_place(place_geojson, properties):
-    url = place_geojson['properties']['url'] + '?include-private'
+    url = place_geojson['properties']['url'] + '?include_private'
     place_geojson['properties'].update(properties)
 
     resp = requests.put(url, data=json.dumps(place_geojson),
-      headers={"Content-Type": "application/json", "Accept": "application/json"},
-      auth=('user_here', 'pw_here'))
+      headers={"Content-Type": "application/json", "Accept": "application/json",
+      "Authorization": "Bearer " + app.config.get('ACCESS_TOKEN')})
 
     return resp
 
