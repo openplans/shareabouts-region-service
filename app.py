@@ -1,7 +1,7 @@
 import os
 import requests
 import ujson as json
-from flask import Flask, Response, jsonify, request, safe_join
+from flask import Flask, Response, jsonify, request, safe_join, abort
 from shapely.geometry import shape
 
 
@@ -36,6 +36,9 @@ def locations_route():
 
 @app.route('/api/v1/<location>')
 def types_route(location):
+    if location not in locations_list:
+        abort(404)
+
     return Response(json.dumps(types_by_location.get(location)),  mimetype='application/json')
 
 
@@ -49,6 +52,8 @@ def get_file_data(location, type):
         # Open and read the file
         with open(filename, 'r') as myfile:
             return myfile.read()
+    else:
+        return None
 
 
 def get_place_region(place_geojson, regions_geojson):
@@ -75,14 +80,21 @@ def update_place(place_geojson, properties):
 def type_route(location, type):
     geojson_str = get_file_data(location, type)
 
+    # No match for location/type
+    if not geojson_str:
+        abort(404)
+
     if request.method == 'POST':
-        place_geojson = json.loads(request.data)
-        region_geojson = get_place_region(place_geojson, json.loads(geojson_str))
-        region_attrs = region_geojson['properties']
+        try:
+            place_geojson = json.loads(request.data)
+            region_geojson = get_place_region(place_geojson, json.loads(geojson_str))
+            region_attrs = region_geojson['properties']
 
-        update_place(place_geojson, region_attrs)
+            update_place(place_geojson, region_attrs)
 
-        return Response(json.dumps(region_attrs),  mimetype='application/json')
+            return Response(json.dumps(region_attrs),  mimetype='application/json')
+        except:
+            abort(400)
     else:
         return Response(geojson_str,  mimetype='application/json')
 
