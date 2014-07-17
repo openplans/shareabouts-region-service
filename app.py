@@ -76,6 +76,7 @@ def update_place(place_geojson, properties):
 
     resp = requests.put(url, data=json.dumps(place_geojson),
       headers={"Content-Type": "application/json", "Accept": "application/json",
+      "x-shareabouts-silent": "true",
       "Authorization": "Bearer " + app.config.get('ACCESS_TOKEN')})
 
     return resp
@@ -95,9 +96,9 @@ def type_route(location, type):
             region_geojson = get_place_region(place_geojson, json.loads(geojson_str))
             region_attrs = region_geojson['properties']
 
-            update_place(place_geojson, region_attrs)
+            resp = update_place(place_geojson, region_attrs)
 
-            return Response(json.dumps(region_attrs),  mimetype='application/json')
+            return Response(resp.text ,  mimetype='application/json')
         except:
             abort(400)
     else:
