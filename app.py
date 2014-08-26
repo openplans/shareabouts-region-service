@@ -64,6 +64,8 @@ def get_place_region(place_geojson, regions_geojson):
         if region_poly.contains(place_geom):
             return feature
 
+    return None
+
 
 def update_place(place_geojson, properties):
     url = place_geojson['properties']['url'] + '?include_private'
@@ -92,13 +94,45 @@ def type_route(location, type):
 
     if request.method == 'POST':
         try:
+            # Parse the place geojson
             place_geojson = json.loads(request.data)
+            # Get the containing region
             region_geojson = get_place_region(place_geojson, json.loads(geojson_str))
-            region_attrs = region_geojson['properties']
 
-            resp = update_place(place_geojson, region_attrs)
+            if region_geojson:
+                region_attrs = region_geojson['properties']
+                # Update the existing place (updates the API)
+                resp = update_place(place_geojson, region_attrs)
+                # Respond with the updated place
+                return Response(resp.text,  mimetype='application/json')
+            else:
+                # No containing region was found
+                abort(404)
+        except:
+            abort(400)
+    # Get the region for a simple lat/lng, via a GET
+    elif request.args.get('ll'):
+        try:
+            ll = request.args.get('ll')
+            lat, lng = ll.split(',')
 
-            return Response(resp.text ,  mimetype='application/json')
+            # Create the geojson
+            place_geojson = json.loads('{"geometry": { "type": "Point", "coordinates": [%s, %s] }}' % (lng, lat,))
+            # Get the containing region
+
+            region_geojson = get_place_region(place_geojson, json.loads(geojson_str))
+
+            if region_geojson:
+                region_attrs = region_geojson['properties']
+                resp = json.dumps(region_attrs)
+
+                callback = request.args.get('callback')
+                if callback:
+                    resp = '%s(%s);' % (callback, resp,)
+
+                return Response(resp,  mimetype='application/json')
+            else:
+                abort(404)
         except:
             abort(400)
     else:
