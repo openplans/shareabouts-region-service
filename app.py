@@ -2,6 +2,7 @@ import os
 import requests
 import ujson as json
 from flask import Flask, Response, jsonify, request, safe_join, abort
+from raven.contrib.flask import Sentry
 from shapely.geometry import shape
 
 
@@ -15,6 +16,8 @@ def init_settings():
     access_token = os.environ.get('ACCESS_TOKEN')
     if (access_token):
         app.config['ACCESS_TOKEN'] = access_token
+
+    Sentry(app)
 
 
 # Init
@@ -93,48 +96,46 @@ def type_route(location, type):
         abort(404)
 
     if request.method == 'POST':
-        try:
-            # Parse the place geojson
-            place_geojson = json.loads(request.data)
-            # Get the containing region
-            region_geojson = get_place_region(place_geojson, json.loads(geojson_str))
+        # Parse the place geojson
+        place_geojson = json.loads(request.data)
+        # Get the containing region
+        region_geojson = get_place_region(place_geojson, json.loads(geojson_str))
 
-            if region_geojson:
-                region_attrs = region_geojson['properties']
-                # Update the existing place (updates the API)
-                resp = update_place(place_geojson, region_attrs)
-                # Respond with the updated place
-                return Response(resp.text,  mimetype='application/json')
-            else:
-                # No containing region was found
-                abort(404)
-        except:
-            abort(400)
+        if region_geojson:
+            region_attrs = region_geojson['properties']
+            # Update the existing place (updates the API)
+            resp = update_place(place_geojson, region_attrs)
+            # Respond with the updated place
+            return Response(resp.text,  mimetype='application/json')
+        else:
+            # No containing region was found
+            abort(404)
     # Get the region for a simple lat/lng, via a GET
     elif request.args.get('ll'):
+        ll = request.args.get('ll')
+
         try:
-            ll = request.args.get('ll')
             lat, lng = ll.split(',')
-
-            # Create the geojson
-            place_geojson = json.loads('{"geometry": { "type": "Point", "coordinates": [%s, %s] }}' % (lng, lat,))
-            # Get the containing region
-
-            region_geojson = get_place_region(place_geojson, json.loads(geojson_str))
-
-            if region_geojson:
-                region_attrs = region_geojson['properties']
-                resp = json.dumps(region_attrs)
-
-                callback = request.args.get('callback')
-                if callback:
-                    resp = '%s(%s);' % (callback, resp,)
-
-                return Response(resp,  mimetype='application/json')
-            else:
-                abort(404)
         except:
             abort(400)
+
+        # Create the geojson
+        place_geojson = json.loads('{"geometry": { "type": "Point", "coordinates": [%s, %s] }}' % (lng, lat,))
+        # Get the containing region
+
+        region_geojson = get_place_region(place_geojson, json.loads(geojson_str))
+
+        if region_geojson:
+            region_attrs = region_geojson['properties']
+            resp = json.dumps(region_attrs)
+
+            callback = request.args.get('callback')
+            if callback:
+                resp = '%s(%s);' % (callback, resp,)
+
+            return Response(resp,  mimetype='application/json')
+        else:
+            abort(404)
     else:
         return Response(geojson_str,  mimetype='application/json')
 
