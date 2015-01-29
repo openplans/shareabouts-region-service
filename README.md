@@ -8,7 +8,9 @@ You can attach a webhook to a Shareabouts dataset. Adding the region service all
 Deploy 
 ----------------
 
-This repo contains the necessary files to deploy the region service on Heroku. 
+This repo contains the necessary files to deploy the region service on Heroku. You will need to specify the `heroku-buildpack-multi` with the following command:
+
+    heroku config:add BUILDPACK_URL=https://github.com/heroku/heroku-buildpack-multi.git
 
 
 Uploading regions 
