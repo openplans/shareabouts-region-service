@@ -5,6 +5,12 @@ API for identifying and updating the region of a Shareabouts place.
 
 You can attach a webhook to a Shareabouts dataset. Adding the region service allows you to add location information to each submitted place, for example neighborhood or borough.
 
+Deploy 
+----------------
+
+This repo contains the necessary files to deploy the region service on Heroku. 
+
+
 Uploading regions 
 ------------------
 
