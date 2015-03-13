@@ -30,3 +30,43 @@ Webhooks are configured at `API-SERVER-URL/admin/sa_api_v2/webhook/`.
 Choose the dataset, event (currently `On Add` is the only option), and the URL of your region file, e.g. `https://shareabouts-region-service.herokuapp.com/api/v1/nyc/nybb`.
 
 After this is set up, all new places in the selected dataset will be given all attributes of the region they intersect. For example, if you have `id`, `name`, and `representative` fields in the region file, those attributes will be added to the place attributes. 
+
+Testing the service
+------------------
+
+1. Create a request bin at requestbin.herokuapp.com. This can also be accessed
+   at http://requestb.in/, but we use the herokuapp.com address because it
+   supports https and the region service is going to assume https is supported.
+
+2. Copy the bin url.
+
+3. Run the following cURL command:
+
+        curl -X POST https://<REGION-SERVICE-HOST-GOES-HERE>/api/v1/nyc/nybb \
+            -d '{
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [-73.8530361, 40.8595801]
+                },
+                "properties": { "url": "http://requestbin.herokuapp.com/17gwcxa1" }
+            }' \
+            -H "Content-type: application/json"
+
+   You should just see `ok` in the terminal.
+
+4. Reload the request bin you created. You should now see a PUT request listed.
+   Ensure that, under *Raw Body*, you see JSON that approximately matches:
+
+        {
+            "properties": {
+                "BoroName":"Bronx",
+                "BoroCode":2,
+                "url":"http:\/\/requestbin.herokuapp.com\/..."
+            },
+            "type":"Feature",
+            "geometry":{
+                "coordinates":[-73.8530361,40.8595801],
+                "type":"Point"
+            }
+        }
