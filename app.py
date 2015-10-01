@@ -133,7 +133,10 @@ def type_route(location, type):
             if callback:
                 resp = '%s(%s);' % (callback, resp,)
 
-            return Response(resp,  mimetype='application/json')
+            resp = Response(resp,  mimetype='application/json')
+            resp.headers['Access-Control-Allow-Origin'] = '*'
+            resp.headers['Access-Control-Allow-Methods'] = 'GET,HEAD,OPTIONS'
+            return resp
         else:
             abort(404)
     else:
