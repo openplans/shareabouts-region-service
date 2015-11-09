@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import requests
 import ujson as json
@@ -10,7 +11,7 @@ def init_settings():
     try:
         app.config.from_pyfile('local_settings.py')
     except:
-        print 'No settings file found.'
+        print('No settings file found.')
 
     # Environment overrides
     access_token = os.environ.get('ACCESS_TOKEN')
@@ -25,10 +26,10 @@ app = Flask(__name__)
 init_settings()
 
 # Get the list of directories from the data directory
-locations_list = os.walk('data').next()[1]
+locations_list = next(os.walk('data'))[1]
 # A dictionary, keyed by location/dir, with a list of types/files
 # (without the file extension)
-types_by_location = dict((location, [os.path.splitext(filename)[0] for filename in os.walk(os.path.join('data', location)).next()[2]])
+types_by_location = dict((location, [os.path.splitext(filename)[0] for filename in next(os.walk(os.path.join('data', location)))[2]])
     for location in locations_list)
 
 
