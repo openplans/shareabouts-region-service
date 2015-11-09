@@ -7,6 +7,5 @@ gunicorn==19.0.0
 itsdangerous==0.24
 requests==2.3.0
 ujson==1.33
-wsgiref==0.1.2
 raven==5.0.0
 blinker==1.3
